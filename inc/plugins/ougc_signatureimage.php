@@ -58,6 +58,7 @@ else
 	$plugins->add_hook("postbit_prev", "ougc_signatureimage_postbit");
 	$plugins->add_hook("postbit_pm", "ougc_signatureimage_postbit");
 	$plugins->add_hook("postbit_announcement", "ougc_signatureimage_postbit");
+	$plugins->add_hook("usercp_editsig_end", "ougc_signatureimage_editsig");
 	$plugins->add_hook("fetch_wol_activity_end", "ougc_signatureimage_online_activity");
 	$plugins->add_hook("build_friendly_wol_location_end", "ougc_signatureimage_online_location");
 	$plugins->add_hook("modcp_do_editprofile_start", "ougc_signatureimage_removal");
@@ -695,17 +696,25 @@ function ougc_signatureimage_profile()
 {
 	global $signature, $memprofile;
 
-	ougc_signatureimage_profile_get($signature, $memprofile);
+	ougc_signatureimage_profile_parse($signature, $memprofile);
 }
 
 // Signature Image display in postbit
 function ougc_signatureimage_postbit(&$post)
 {
-	ougc_signatureimage_profile_get($post['signature'], $post);
+	ougc_signatureimage_profile_parse($post['signature'], $post);
+}
+
+// Parse signature in UCP edit page
+function ougc_signatureimage_editsig()
+{
+	global $signature, $mybb;
+
+	ougc_signatureimage_profile_parse($signature, $mybb->user);
 }
 
 // Parse the signature
-function ougc_signatureimage_profile_get(&$signature, &$user)
+function ougc_signatureimage_profile_parse(&$signature, &$user)
 {
 	global $templates, $settings, $lang;
 
