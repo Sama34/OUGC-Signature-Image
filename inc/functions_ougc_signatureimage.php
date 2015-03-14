@@ -269,11 +269,11 @@ function upload_ougc_signatureimagefile($file, $path, $filename="")
 function format_signature_image($ougc_signatureimageture, $dimensions = '', $max_dimensions = '')
 {
 	global $mybb;
-	static $ougc_signatureimagetures;
+	static $images;
 
-	if(!isset($ougc_signatureimagetures))
+	if(!isset($images))
 	{
-		$ougc_signatureimagetures = array();
+		$images = array();
 	}
 
 	if(!$ougc_signatureimageture)
@@ -283,9 +283,9 @@ function format_signature_image($ougc_signatureimageture, $dimensions = '', $max
 		$dimensions = '';
 	}
 
-	if(isset($ougc_signatureimagetures[$ougc_signatureimageture]))
+	if(isset($images[$ougc_signatureimageture]))
 	{
-		return $ougc_signatureimagetures[$ougc_signatureimageture];
+		return $images[$ougc_signatureimageture];
 	}
 
 	if(!$max_dimensions)
@@ -305,19 +305,22 @@ function format_signature_image($ougc_signatureimageture, $dimensions = '', $max
 			{
 				require_once MYBB_ROOT."inc/functions_image.php";
 				$scaled_dimensions = scale_image($dimensions[0], $dimensions[1], $max_width, $max_height);
-				$ougc_signatureimageture_width_height = "width=\"{$scaled_dimensions['width']}\" height=\"{$scaled_dimensions['height']}\"";
+				$width = (int)$scaled_dimensions['width'];
+				$height = (int)$scaled_dimensions['height'];
 			}
 			else
 			{
-				$ougc_signatureimageture_width_height = "width=\"{$dimensions[0]}\" height=\"{$dimensions[1]}\"";
+				$width = (int)$dimensions[0];
+				$height = (int)$dimensions[1];
 			}
 		}
 	}
 
-	$ougc_signatureimagetures[$ougc_signatureimageture] = array(
+	$images[$ougc_signatureimageture] = array(
 		'image' => $mybb->get_asset_url($ougc_signatureimageture),
-		'width_height' => $ougc_signatureimageture_width_height
+		'width' => $width,
+		'height' => $height
 	);
 
-	return $ougc_signatureimagetures[$ougc_signatureimageture];
+	return $images[$ougc_signatureimageture];
 }

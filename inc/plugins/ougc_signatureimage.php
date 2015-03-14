@@ -54,6 +54,10 @@ else
 	$plugins->add_hook("usercp_start", "ougc_signatureimage_run");
 	$plugins->add_hook("usercp_menu_built", "ougc_signatureimage_nav");
 	$plugins->add_hook("member_profile_end", "ougc_signatureimage_profile");
+	$plugins->add_hook("postbit", "ougc_signatureimage_postbit");
+	$plugins->add_hook("postbit_prev", "ougc_signatureimage_postbit");
+	$plugins->add_hook("postbit_pm", "ougc_signatureimage_postbit");
+	$plugins->add_hook("postbit_announcement", "ougc_signatureimage_postbit");
 	$plugins->add_hook("fetch_wol_activity_end", "ougc_signatureimage_online_activity");
 	$plugins->add_hook("build_friendly_wol_location_end", "ougc_signatureimage_online_location");
 	$plugins->add_hook("modcp_do_editprofile_start", "ougc_signatureimage_removal");
@@ -83,7 +87,7 @@ else
 
 	if(THIS_SCRIPT == 'member.php')
 	{
-		$templatelist .= 'ougcsignatureimage_profile,ougcsignatureimage_profile_description,ougcsignatureimage_profile_img';
+		$templatelist .= 'ougcsignatureimage_profile';
 	}
 
 	if(THIS_SCRIPT == 'modcp.php')
@@ -259,6 +263,7 @@ x=X',
 
 	// Add template group
 	$PL->templates('ougcsignatureimage', '<lang:setting_group_ougc_signatureimage>', array(
+		'' => '<img src="{$image[\'image\']}" title="{$description}" alt="{$description}" width="{$image[\'width\']}" height="{$image[\'height\']}" />',
 		'usercp' => '<html>
 <head>
 <title>{$mybb->settings[\'bbname\']} - {$lang->change_ougc_signatureimageture}</title>
@@ -321,18 +326,6 @@ x=X',
 		'usercp_auto_resize_user' => '<br /><span class="smalltext"><input type="checkbox" name="auto_resize" value="1" checked="checked" id="auto_resize" /> <label for="auto_resize">{$lang->ougc_signatureimage_auto_resize_option}</label></span>',
 		'usercp_current' => '<td width="150" align="right"><img src="{$userougc_signatureimageture[\'image\']}" alt="{$lang->signature_image_mine}" title="{$lang->signature_image_mine}" {$userougc_signatureimageture[\'width_height\']} /></td>',
 		'usercp_remove' => '<input type="submit" class="button" name="remove" value="{$lang->remove_image}" />',
-		'profile' => '<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead"><strong>{$lang->users_ougc_signatureimage}</strong></td>
-</tr>
-<tr>
-<td class="trow1" align="center">{$ougc_signatureimage_img}<br />
-{$description}</td>
-</tr>
-</table>
-<br />',
-		'profile_description' => '<span class="smalltext"><em>{$memprofile[\'ougc_signatureimage_description\']}</em></span>',
-		'profile_img' => '<img src="{$userougc_signatureimageture[\'image\']}" alt="" {$userougc_signatureimageture[\'width_height\']} />',
 		'usercp_description' => '<tr>
 	<td class="trow1" width="40%">
 		<strong>{$lang->ougc_signatureimage_description}</strong>
@@ -700,27 +693,49 @@ function ougc_signatureimage_run()
 // Signature Image display in profile
 function ougc_signatureimage_profile()
 {
-	global $mybb, $db, $templates, $lang, $theme, $memprofile, $ougc_signatureimage, $description;
-	isset($lang->setting_group_ougc_signatureimage) or $lang->load("ougc_signatureimage");
-	require_once MYBB_ROOT."inc/functions_ougc_signatureimage.php";
+	global $signature, $memprofile;
 
-	$lang->users_ougc_signatureimage = $lang->sprintf($lang->users_ougc_signatureimage, $memprofile['username']);
+	ougc_signatureimage_profile_get($signature, $memprofile);
+}
 
-	$ougc_signatureimage = $ougc_signatureimage_img = '';
-	if($memprofile['ougc_signatureimage'])
+// Signature Image display in postbit
+function ougc_signatureimage_postbit(&$post)
+{
+	ougc_signatureimage_profile_get($post['signature'], $post);
+}
+
+// Parse the signature
+function ougc_signatureimage_profile_get(&$signature, &$user)
+{
+	global $templates, $settings, $lang;
+
+	if(strpos($signature, '{SIGNATURE_IMAGE}') == false)
 	{
-		$memprofile['ougc_signatureimage'] = htmlspecialchars_uni($memprofile['ougc_signatureimage']);
-		$userougc_signatureimageture = format_signature_image($memprofile['ougc_signatureimage'], $memprofile['ougc_signatureimage_dimensions']);
-		eval("\$ougc_signatureimage_img = \"".$templates->get("ougcsignatureimage_profile_img")."\";");
-
-		if($memprofile['ougc_signatureimage_description'] && $mybb->settings['ougc_signatureimage_description'] == 1)
-		{
-			$memprofile['ougc_signatureimage_description'] = htmlspecialchars_uni($memprofile['ougc_signatureimage_description']);
-			eval("\$description = \"".$templates->get("ougcsignatureimage_profile_description")."\";");
-		}
-
-		eval("\$ougc_signatureimage = \"".$templates->get("ougcsignatureimage_profile")."\";");
+		return;
 	}
+
+	if(!$user['ougc_signatureimage'])
+	{
+		$signature = str_replace('{SIGNATURE_IMAGE}', '', $signature);
+		return;
+	}
+
+	$user['ougc_signatureimage'] = htmlspecialchars_uni($user['ougc_signatureimage']);
+
+	isset($lang->setting_group_ougc_signatureimage) or $lang->load('ougc_signatureimage');
+
+	$description = $lang->sprintf($lang->users_ougc_signatureimage, $user['username']);
+	if($user['ougc_signatureimage_description'] && $settings['ougc_signatureimage_description'])
+	{
+		$description = htmlspecialchars_uni($user['ougc_signatureimage_description']);
+	}
+
+	require_once MYBB_ROOT.'inc/functions_ougc_signatureimage.php';
+	$image = format_signature_image($user['ougc_signatureimage'], $user['ougc_signatureimage_dimensions']);
+
+	eval('$image = "'.$templates->get('ougcsignatureimage', 1, 0).'";');
+
+	$signature = str_replace('{SIGNATURE_IMAGE}', $image, $signature);
 }
 
 // Online location support
