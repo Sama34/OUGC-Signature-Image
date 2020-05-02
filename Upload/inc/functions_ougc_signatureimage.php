@@ -2,16 +2,16 @@
 
 /***************************************************************************
  *
- *   OUGC Signature Image plugin (/inc/plugins/ougc_signatureimage.php)
- *	 Author: Omar Gonzalez
- *   Copyright: © 2015 Omar Gonzalez
- *   
- *   Based on: Profile Picture plugin
- *	 By: Starpaul20 (PaulBender)
- *   
- *   Website: http://omarg.me
+ *	OUGC Signature Image plugin (/inc/plugins/ougc_signatureimage.php)
+ *	Author: Omar Gonzalez
+ *	Copyright: © 2015 - 2020 Omar Gonzalez
  *
- *   Allows your users to upload a picture to display in their signature.
+ *	Based on: Profile Picture plugin
+ *	By: Starpaul20 (PaulBender)
+ *
+ *	Website: https://ougc.network
+ *
+ *	Allows your users to upload an image to display in their signature.
  *
  ***************************************************************************
  
@@ -20,21 +20,23 @@
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
-	
+
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
-	
+
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 
+require_once MYBB_ROOT.'inc/functions_upload.php';
+
 /**
- * Remove any matching profile pic for a specific user ID
+ * Remove any matching signature image for a specific user ID
  *
- * @param int The user ID
- * @param string A file name to be excluded from the removal
+ *  @param int $uid The user ID
+ * @param string $exclude A file name to be excluded from the removal
  */
 function remove_ougc_signatureimage($uid, $exclude="")
 {
@@ -65,11 +67,11 @@ function remove_ougc_signatureimage($uid, $exclude="")
 }
 
 /**
- * Upload a new profile pic in to the file system
+ * Upload a new signature image in to the file system
  *
- * @param srray incoming FILE array, if we have one - otherwise takes $_FILES['ougc_signatureimageupload']
- * @param string User ID this profile pic is being uploaded for, if not the current user
- * @return array Array of errors if any, otherwise filename of successful.
+ * @param array $ougc_signatureimage incoming FILE array, if we have one - otherwise takes $_FILES['ougc_signatureimage_upload']
+ * @param int $uid User ID this signature image is being uploaded for, if not the current user
+ * @return array Array of errors if any, otherwise filename if successful.
  */
 function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 {
@@ -110,10 +112,10 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 	}
 
 	$filename = "ougc_signatureimage_".$uid.".".$ext;
-	$file = upload_ougc_signatureimagefile($ougc_signatureimage, $ougc_signatureimagepath, $filename);
+	$file = upload_file($ougc_signatureimage, $ougc_signatureimagepath, $filename);
 	if($file['error'])
 	{
-		@unlink($ougc_signatureimagepath."/".$filename);		
+		delete_uploaded_file($ougc_signatureimagepath."/".$filename);		
 		$ret['error'] = $lang->error_uploadfailed;
 		return $ret;
 	}	
@@ -122,7 +124,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 	if(!file_exists($ougc_signatureimagepath."/".$filename))
 	{
 		$ret['error'] = $lang->error_uploadfailed;
-		@unlink($ougc_signatureimagepath."/".$filename);
+		delete_uploaded_file($ougc_signatureimagepath."/".$filename);
 		return $ret;
 	}
 
@@ -130,7 +132,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 	$img_dimensions = @getimagesize($ougc_signatureimagepath."/".$filename);
 	if(!is_array($img_dimensions))
 	{
-		@unlink($ougc_signatureimagepath."/".$filename);
+		delete_uploaded_file($ougc_signatureimagepath."/".$filename);
 		$ret['error'] = $lang->error_uploadfailed;
 		return $ret;
 	}
@@ -150,7 +152,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 				{
 					$ret['error'] = $lang->sprintf($lang->error_ougc_signatureimagetoobig, $maxwidth, $maxheight);
 					$ret['error'] .= "<br /><br />".$lang->error_ougc_signatureimageresizefailed;
-					@unlink($ougc_signatureimagepath."/".$filename);
+					delete_uploaded_file($ougc_signatureimagepath."/".$filename);
 					return $ret;				
 				}
 				else
@@ -168,7 +170,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 				{
 					$ret['error'] .= "<br /><br />".$lang->error_ougc_signatureimageuserresize;
 				}
-				@unlink($ougc_signatureimagepath."/".$filename);
+				delete_uploaded_file($ougc_signatureimagepath."/".$filename);
 				return $ret;
 			}			
 		}
@@ -177,7 +179,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 	// Next check the file size
 	if($ougc_signatureimage['size'] > ($mybb->usergroup['ougc_signatureimage_maxsize']*1024) && $mybb->usergroup['ougc_signatureimage_maxsize'] > 0)
 	{
-		@unlink($ougc_signatureimagepath."/".$filename);
+		delete_uploaded_file($ougc_signatureimagepath."/".$filename);
 		$ret['error'] = $lang->error_uploadsize;
 		return $ret;
 	}	
@@ -199,6 +201,11 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 		case "image/x-png":
 			$img_type = 3;
 			break;
+		case "image/bmp":
+			case "image/x-bmp":
+			case "image/x-windows-bmp":
+				$img_type = 6;
+				break;
 		default:
 			$img_type = 0;
 	}
@@ -207,7 +214,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 	if($img_dimensions[2] != $img_type || $img_type == 0)
 	{
 		$ret['error'] = $lang->error_uploadfailed;
-		@unlink($ougc_signatureimagepath."/".$filename);
+		delete_uploaded_file($ougc_signatureimagepath."/".$filename);
 		return $ret;		
 	}
 	// Everything is okay so lets delete old signature image for this user
@@ -215,58 +222,21 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 
 	$ret = array(
 		"ougc_signatureimage" => $mybb->settings['ougc_signatureimage_uploadpath']."/".$filename,
-		"width" => intval($img_dimensions[0]),
-		"height" => intval($img_dimensions[1])
+		"width" => (int)$img_dimensions[0],
+		"height" => (int)$img_dimensions[1]
 	);
 	return $ret;
 }
 
 /**
- * Actually move a file to the uploads directory
- *
- * @param array The PHP $_FILE array for the file
- * @param string The path to save the file in
- * @param string The filename for the file (if blank, current is used)
- */
-function upload_ougc_signatureimagefile($file, $path, $filename="")
-{
-	if(empty($file['name']) || $file['name'] == "none" || $file['size'] < 1)
-	{
-		$upload['error'] = 1;
-		return $upload;
-	}
-
-	if(!$filename)
-	{
-		$filename = $file['name'];
-	}
-
-	$upload['original_filename'] = preg_replace("#/$#", "", $file['name']); // Make the filename safe
-	$filename = preg_replace("#/$#", "", $filename); // Make the filename safe
-	$moved = @move_uploaded_file($file['tmp_name'], $path."/".$filename);
-
-	if(!$moved)
-	{
-		$upload['error'] = 2;
-		return $upload;
-	}
-	@my_chmod($path."/".$filename, '0644');
-	$upload['filename'] = $filename;
-	$upload['path'] = $path;
-	$upload['type'] = $file['type'];
-	$upload['size'] = $file['size'];
-	return $upload;
-}
-
-/**
  * Formats a signature image to a certain dimension
  *
- * @param string The signature image file name
- * @param string Dimensions of the signature image, width x height (e.g. 44|44)
- * @param string The maximum dimensions of the formatted signature image
+ * @param string $ougc_signatureimage The signature image file name
+ * @param string $dimensions Dimensions of the signature image, width x height (e.g. 44|44)
+ * @param string $max_dimensions The maximum dimensions of the formatted signature image
  * @return array Information for the formatted signature image
  */
-function format_signature_image($ougc_signatureimageture, $dimensions = '', $max_dimensions = '')
+function format_signature_image($ougc_signatureimage, $dimensions = '', $max_dimensions = '')
 {
 	global $mybb;
 	static $images;
@@ -276,22 +246,37 @@ function format_signature_image($ougc_signatureimageture, $dimensions = '', $max
 		$images = array();
 	}
 
-	if(!$ougc_signatureimageture)
+	if(my_strpos($ougc_signatureimage, '://') !== false && !$mybb->settings['ougc_signatureimage_allowremote'])
+	{
+		// Remote signature images, but remote signature images are disallowed.
+		$ougc_signatureimage = null;
+	}
+
+	if(!$ougc_signatureimage)
 	{
 		// Default signature image
-		$ougc_signatureimageture = '';
+		$ougc_signatureimage = '';
 		$dimensions = '';
 	}
 
-	if(isset($images[$ougc_signatureimageture]))
+	// An empty key wouldn't work so we need to add a fall back
+	$key = $dimensions;
+	if(empty($key))
 	{
-		return $images[$ougc_signatureimageture];
+		$key = 'default';
+	}
+	$key2 = $max_dimensions;
+	if(empty($key2))
+	{
+		$key2 = 'default';
 	}
 
-	if(!$max_dimensions)
+	if(isset($images[$ougc_signatureimage][$key][$key2]))
 	{
-		$max_dimensions = $mybb->usergroup['ougc_signatureimage_maxdimensions'];
+		return $images[$ougc_signatureimage][$key][$key2];
 	}
+
+	$ougc_signatureimage_width_height = '';
 
 	if($dimensions)
 	{
@@ -301,7 +286,7 @@ function format_signature_image($ougc_signatureimageture, $dimensions = '', $max
 		{
 			list($max_width, $max_height) = explode('x', $max_dimensions);
 
-			if($dimensions[0] > $max_width || $dimensions[1] > $max_height)
+			if(!empty($max_dimensions) && ($dimensions[0] > $max_width || $dimensions[1] > $max_height))
 			{
 				require_once MYBB_ROOT."inc/functions_image.php";
 				$scaled_dimensions = scale_image($dimensions[0], $dimensions[1], $max_width, $max_height);
@@ -316,11 +301,11 @@ function format_signature_image($ougc_signatureimageture, $dimensions = '', $max
 		}
 	}
 
-	$images[$ougc_signatureimageture] = array(
-		'image' => $mybb->get_asset_url($ougc_signatureimageture),
+	$images[$ougc_signatureimage][$key][$key2] = array(
+		'image' => htmlspecialchars_uni($mybb->get_asset_url($ougc_signatureimage)),
 		'width' => $width,
 		'height' => $height
 	);
 
-	return $images[$ougc_signatureimageture];
+	return $images[$ougc_signatureimage][$key][$key2];
 }
