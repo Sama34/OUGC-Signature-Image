@@ -799,7 +799,7 @@ function ougc_signatureimage_admin_user_users_edit_signatur()
 
 function ougc_signatureimage_admin_user_users_edit_start()
 {
-	global $db, $extra_user_updates, $mybb, $ougc_signatureimage_errors, $user;
+	global $db, $mybb, $ougc_signatureimage_errors, $user;
 
 	require_once MYBB_ROOT."inc/functions_ougc_signatureimage.php";
 	$user_permissions = user_permissions($user['uid']);
@@ -937,6 +937,11 @@ function ougc_signatureimage_admin_user_users_edit_start()
 
 	if(!$ougc_signatureimage_errors)
 	{
+		if($extra_user_updates)
+		{
+			$db->update_query("users", $extra_user_updates, "uid='{$user['uid']}'");
+		}
+
 		return;
 	}
 
