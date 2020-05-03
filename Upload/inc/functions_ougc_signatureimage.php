@@ -6,8 +6,8 @@
  *	Author: Omar Gonzalez
  *	Copyright: © 2015 - 2020 Omar Gonzalez
  *
- *	Based on: Profile Picture plugin
- *	By: Starpaul20 (PaulBender)
+ *	Based on: Profile Picture plugin [https://github.com/PaulBender/Profile-Pictures/]
+ *	By: Starpaul20 (PaulBender) [https://github.com/PaulBender/]
  *
  *	Website: https://ougc.network
  *
@@ -38,7 +38,7 @@ require_once MYBB_ROOT.'inc/functions_upload.php';
  *  @param int $uid The user ID
  * @param string $exclude A file name to be excluded from the removal
  */
-function remove_ougc_signatureimage($uid, $exclude="")
+function ougc_signatureimage_remove($uid, $exclude="")
 {
 	global $mybb;
 
@@ -58,7 +58,8 @@ function remove_ougc_signatureimage($uid, $exclude="")
 		{
 			if(preg_match("#ougc_signatureimage_".$uid."\.#", $file) && is_file($ougc_signatureimagepath."/".$file) && $file != $exclude)
 			{
-				@unlink($ougc_signatureimagepath."/".$file);
+				require_once MYBB_ROOT."inc/functions_upload.php";
+				delete_uploaded_file($ougc_signatureimagepath."/".$file);
 			}
 		}
 
@@ -73,7 +74,7 @@ function remove_ougc_signatureimage($uid, $exclude="")
  * @param int $uid User ID this signature image is being uploaded for, if not the current user
  * @return array Array of errors if any, otherwise filename if successful.
  */
-function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
+function ougc_signatureimage_upload($ougc_signatureimage=array(), $uid=0)
 {
 	global $db, $mybb, $lang;
 
@@ -84,7 +85,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 
 	if(!$ougc_signatureimage['name'] || !$ougc_signatureimage['tmp_name'])
 	{
-		$ougc_signatureimage = $_FILES['ougc_signatureimageupload'];
+		$ougc_signatureimage = $_FILES['ougc_signatureimage_upload'];
 	}
 
 	if(!is_uploaded_file($ougc_signatureimage['tmp_name']))
@@ -92,12 +93,11 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 		$ret['error'] = $lang->error_uploadfailed;
 		return $ret;
 	}
-
 	// Check we have a valid extension
 	$ext = get_extension(my_strtolower($ougc_signatureimage['name']));
 	if(!preg_match("#^(gif|jpg|jpeg|jpe|bmp|png)$#i", $ext)) 
 	{
-		$ret['error'] = $lang->error_ougc_signatureimagetype;
+		$ret['error'] = $lang->error_ougc_signatureimage_type;
 		return $ret;
 	}
 
@@ -218,7 +218,7 @@ function upload_ougc_signatureimage($ougc_signatureimage=array(), $uid=0)
 		return $ret;		
 	}
 	// Everything is okay so lets delete old signature image for this user
-	remove_ougc_signatureimage($uid, $filename);
+	ougc_signatureimage_remove($uid, $filename);
 
 	$ret = array(
 		"ougc_signatureimage" => $mybb->settings['ougc_signatureimage_uploadpath']."/".$filename,

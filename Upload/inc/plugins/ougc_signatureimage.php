@@ -6,8 +6,8 @@
  *	Author: Omar Gonzalez
  *	Copyright: © 2015 - 2020 Omar Gonzalez
  *
- *	Based on: Profile Picture plugin
- *	By: Starpaul20 (PaulBender)
+ *	Based on: Profile Picture plugin [https://github.com/PaulBender/Profile-Pictures/]
+ *	By: Starpaul20 (PaulBender) [https://github.com/PaulBender/]
  *
  *	Website: https://ougc.network
  *
@@ -45,9 +45,8 @@ if(defined('IN_ADMINCP'))
 	$plugins->add_hook('admin_style_templates_set', create_function('&$args', 'global $lang;	isset($lang->setting_group_ougc_signatureimage) or $lang->load("ougc_signatureimage", true);'));
 
 	$plugins->add_hook("datahandler_user_delete_content", "ougc_signatureimage_user_delete");
-	$plugins->add_hook("admin_user_users_edit_graph_tabs", "ougc_signatureimage_user_options");
-	$plugins->add_hook("admin_user_users_edit_graph", "ougc_signatureimage_user_graph");
-	$plugins->add_hook("admin_user_users_edit_commit_start", "ougc_signatureimage_user_commit");
+	$plugins->add_hook("admin_user_users_edit_signatur", "ougc_signatureimage_admin_user_users_edit_signatur");
+	$plugins->add_hook("admin_user_users_edit_start", "ougc_signatureimage_admin_user_users_edit_start");
 	$plugins->add_hook("admin_formcontainer_end", "ougc_signatureimage_usergroup_permission");
 	$plugins->add_hook("admin_user_groups_edit_commit", "ougc_signatureimage_usergroup_permission_commit");
 	$plugins->add_hook("admin_tools_system_health_output_chmod_list", "ougc_signatureimage_chmod");
@@ -57,7 +56,6 @@ else
 	$plugins->add_hook("global_start", "ougc_signatureimage_header_cache");
 	$plugins->add_hook("global_intermediate", "ougc_signatureimage_header");
 	$plugins->add_hook("usercp_start", "ougc_signatureimage_run");
-	$plugins->add_hook("usercp_menu_built", "ougc_signatureimage_nav");
 	$plugins->add_hook("member_profile_end", "ougc_signatureimage_profile");
 	$plugins->add_hook("postbit", "ougc_signatureimage_postbit");
 	$plugins->add_hook("postbit_prev", "ougc_signatureimage_postbit");
@@ -83,22 +81,7 @@ else
 
 	if(THIS_SCRIPT == 'usercp.php')
 	{
-		$templatelist .= 'ougcsignatureimage_usercp,ougcsignatureimage_usercp_auto_resize_auto,ougcsignatureimage_usercp_auto_resize_user,ougcsignatureimage_usercp_current,ougcsignatureimage_usercp_nav,ougcsignatureimage_usercp_remove,ougcsignatureimage_usercp_upload,ougcsignatureimage_usercp_remote';
-	}
-
-	if(THIS_SCRIPT == 'private.php')
-	{
-		$templatelist .= 'ougcsignatureimage_usercp_nav';
-	}
-	
-	if(THIS_SCRIPT == 'usercp2.php')
-	{
-		global $templatelist;
-		if(isset($templatelist))
-		{
-			$templatelist .= ',';
-		}
-		$templatelist .= 'ougcsignatureimage_usercp_nav';
+		$templatelist .= 'ougcsignatureimage_usercp,ougcsignatureimage_usercp_auto_resize_auto,ougcsignatureimage_usercp_auto_resize_user,ougcsignatureimage_usercp_current,ougcsignatureimage_usercp_nav,ougcsignatureimage_usercp_remove,ougcsignatureimage_usercp_upload,ougcsignatureimage_usercp_remote, ougcsignatureimage';
 	}
 
 	if(THIS_SCRIPT == 'member.php')
@@ -121,7 +104,7 @@ function ougc_signatureimage_info()
 
 	return array(
 		"name"			=> 'OUGC Signature Image',
-		"description"	=> $lang->setting_group_ougc_signatureimage_desc.$lang->setting_group_ougc_signatureimage_desc_more,
+		"description"	=> $lang->setting_group_ougc_signatureimage_desc,
 		'website'		=> 'https://ougc.network',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'https://ougc.network',
@@ -233,75 +216,59 @@ disabled={$lang->setting_ougc_signatureimage_resizing_disabled}",
 		   'optionscode'	=> 'yesno',
 		   'value'			=> 1
 		),
+		'replacement'		=> array(
+		   'title'			=> $lang->setting_ougc_signatureimage_replacement,
+		   'description'	=> $lang->setting_ougc_signatureimage_replacement_desc,
+		   'optionscode'	=> 'text',
+		   'value'			=> 'SIGNATURE_IMAGE'
+		),
 	));
 
 	// Add template group
 	$PL->templates('ougcsignatureimage', $lang->setting_group_ougc_signatureimage, array(
 		'' => '<img src="{$image[\'image\']}" title="{$description}" alt="{$description}" width="{$image[\'width\']}" height="{$image[\'height\']}" />',
-		'usercp' => '<html>
-<head>
-<title>{$mybb->settings[\'bbname\']} - {$lang->change_ougc_signatureimage}</title>
-{$headerinclude}
-</head>
-<body>
-{$header}
-<table width="100%" border="0" align="center">
-<tr>
-	{$usercpnav}
-	<td valign="top">
-		{$ougc_signatureimage_error}
-		<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-			<tr>
-				<td class="thead" colspan="2"><strong>{$lang->change_ougc_signatureimage}</strong></td>
-			</tr>
-			<tr>
-				<td class="trow1" colspan="2">
-					<table cellspacing="0" cellpadding="0" width="100%">
-						<tr>
-							<td>{$lang->ougc_signatureimage_note}{$ougc_signatureimagemsg}
-							{$currentougc_signatureimage}
-							</td>
-						</tr>
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td class="tcat" colspan="2"><strong>{$lang->ougc_signatureimage_custom}</strong></td>
-			</tr>
-			<form enctype="multipart/form-data" action="usercp.php" method="post">
-			<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
-			{$ougc_signatureimageupload}
-			{$ougc_signatureimage_remote}
-		</table>
-		<br />
-		<div align="center">
-			<input type="hidden" name="action" value="do_ougc_signatureimage" />
-			<input type="submit" class="button" name="submit" value="{$lang->change_image}" />
-			{$removeougc_signatureimage}
-		</div>
-	</td>
-</tr>
+		'usercp' => '<br />
+<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+	<tr>
+		<td class="thead" colspan="2"><strong>{$lang->ougc_signatureimage_change}</strong></td>
+	</tr>
+	<tr>
+		<td class="trow1" colspan="2">
+			<table cellspacing="0" cellpadding="0" width="100%">
+				<tr>
+					<td>{$lang->ougc_signatureimage_note}{$ougc_signatureimage_msg}
+					{$ougc_signatureimage_current}
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<td class="tcat" colspan="2"><strong>{$lang->ougc_signatureimage_custom}</strong></td>
+	</tr>
+	{$ougc_signatureimage_upload}
+	{$ougc_signatureimage_remote}
 </table>
-</form>
-{$footer}
-</body>
-</html>',
+<br />
+<div align="center">
+	<input type="submit" class="button" name="ougc_signatureimage_submit" value="{$lang->change_image}" />
+	{$ougc_signatureimage_remove}
+</div>',
 		'usercp_auto_resize_auto' => '<br /><span class="smalltext">{$lang->ougc_signatureimage_auto_resize_note}</span>',
 		'usercp_auto_resize_user' => '<br /><span class="smalltext"><input type="checkbox" name="auto_resize" value="1" checked="checked" id="auto_resize" /> <label for="auto_resize">{$lang->ougc_signatureimage_auto_resize_option}</label></span>',
-		'usercp_current' => '<td width="150" align="right"><img src="{$userougc_signatureimage[\'image\']}" alt="{$lang->signature_image_mine}" title="{$lang->signature_image_mine}" {$userougc_signatureimage[\'width_height\']} /></td>',
-		'usercp_remove' => '<input type="submit" class="button" name="remove" value="{$lang->remove_image}" />',
+		'usercp_current' => '<td width="150" align="right"><img src="{$ougc_signatureimage_user[\'image\']}" alt="{$lang->signature_image_mine}" title="{$lang->signature_image_mine}" {$ougc_signatureimage_user[\'width_height\']} /></td>',
+		'usercp_remove' => '<input type="submit" class="button" name="ougc_signatureimage_remove" value="{$lang->remove_image}" />',
 		'usercp_upload' => '<tr>
 	<td class="trow1" width="40%">
 		<strong>{$lang->ougc_signatureimage_upload}</strong>
 		<br /><span class="smalltext">{$lang->ougc_signatureimage_upload_note}</span>
 	</td>
 	<td class="trow1" width="60%">
-		<input type="file" name="ougc_signatureimageupload" size="25" class="fileupload" />
+		<input type="file" name="ougc_signatureimage_upload" size="25" class="fileupload" />
 		{$auto_resize}
 	</td>
 </tr>',
-		'usercp_nav' => '<div><a href="usercp.php?action=ougc_signatureimage" class="usercp_nav_item" style="padding-left:40px; background:url(\'images/ougc_signatureimage.png\') no-repeat left center;">{$lang->ucp_nav_change_ougc_signatureimage}</a></div>',
-		'modcp' => '<tr><td colspan="3"><span class="smalltext"><label><input type="checkbox" class="checkbox" name="remove_ougc_signatureimage" value="1" /> {$lang->remove_signature_image}</label></span></td></tr>',
+		'modcp' => '<tr><td colspan="3"><span class="smalltext"><label><input type="checkbox" class="checkbox" name="ougc_signatureimage_remove" value="1" /> {$lang->remove_signature_image}</label></span></td></tr>',
 		'usercp_remote'	=>	'<tr>
 		<td class="trow2" width="40%">
 			<strong>{$lang->ougc_signatureimage_url}</strong>
@@ -312,7 +279,7 @@ disabled={$lang->setting_ougc_signatureimage_resizing_disabled}",
 			<br /><span class="smalltext">{$lang->ougc_signatureimage_url_gravatar}</span>
 		</td>
 	</tr>',
-		'global_remote_notice'	=>	'<div class="red_alert"><a href="{$mybb->settings[\'bburl\']}/usercp.php?action=ougc_signatureimage">{$lang->remote_ougc_signatureimage_disabled}</a></div>',
+		'global_remote_notice'	=>	'<div class="red_alert"><a href="{$mybb->settings[\'bburl\']}/usercp.php?action=ougc_signatureimage">{$lang->ougc_signatureimage_remote_disabled}</a></div>',
 	));
 
 	// Insert/update version into cache
@@ -341,7 +308,8 @@ disabled={$lang->setting_ougc_signatureimage_resizing_disabled}",
 
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
 	find_replace_templatesets("header", "#".preg_quote('{$bannedwarning}')."#i", '{$ougc_signatureimage_remote_notice}{$bannedwarning}');
-	find_replace_templatesets("usercp_nav_profile", "#".preg_quote('{$changesigop}')."#i", '{$changesigop}<!-- ougc_signatureimage -->');
+	find_replace_templatesets("usercp_editsig", "#".preg_quote('</div>')."#i", '</div>{$ougc_signatureimage}');
+	find_replace_templatesets("usercp_editsig", "#".preg_quote('action="usercp.php"')."#i", 'enctype="multipart/form-data" action="usercp.php"');
 	find_replace_templatesets("modcp_editprofile", "#".preg_quote('{$lang->remove_avatar}</label></span></td>
 										</tr>')."#i", '{$lang->remove_avatar}</label></span></td>
 										</tr>{$ougc_signatureimage}');
@@ -352,21 +320,10 @@ function ougc_signatureimage_deactivate()
 {
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
 	find_replace_templatesets("header", "#".preg_quote('{$ougc_signatureimage_remote_notice}')."#i", '', 0);
+	find_replace_templatesets("usercp_editsig", "#".preg_quote('{$ougc_signatureimage}')."#i", '', 0);
+	find_replace_templatesets("usercp_editsig", "#".preg_quote('enctype="multipart/form-data"')."#i", '', 0);
 	find_replace_templatesets("usercp_nav_profile", "#".preg_quote('<!-- ougc_signatureimage -->')."#i", '', 0);
 	find_replace_templatesets("modcp_editprofile", "#".preg_quote('{$ougc_signatureimage}')."#i", '', 0);
-}
-
-// User CP Nav link
-function ougc_signatureimage_nav()
-{
-	global $db, $mybb, $lang, $templates, $usercpnav;
-	isset($lang->setting_group_ougc_signatureimage) or $lang->load("ougc_signatureimage");
-
-	if($mybb->usergroup['ougc_signatureimage_canuse'] == 1)
-	{
-		eval("\$ougc_signatureimage_nav = \"".$templates->get("ougcsignatureimage_usercp_nav")."\";");
-		$usercpnav = str_replace("<!-- ougc_signatureimage -->", $ougc_signatureimage_nav, $usercpnav);
-	}
 }
 
 // Cache the signature image remote warning template
@@ -397,250 +354,146 @@ function ougc_signatureimage_header()
 // The UserCP signature image page
 function ougc_signatureimage_run()
 {
-	global $db, $mybb, $lang, $templates, $theme, $headerinclude, $usercpnav, $header, $footer;
+	global $db, $mybb, $lang, $templates, $theme, $error;
+
 	isset($lang->setting_group_ougc_signatureimage) or $lang->load("ougc_signatureimage");
+
 	require_once MYBB_ROOT."inc/functions_ougc_signatureimage.php";
 
-	if($mybb->input['action'] == "do_ougc_signatureimage" && $mybb->request_method == "post")
+	if($mybb->input['action'] != "do_editsig" || $mybb->request_method != "post")
 	{
-		// Verify incoming POST request
-		verify_post_check($mybb->get_input('my_post_key'));
+		return;
+	}
 
-		if($mybb->usergroup['ougc_signatureimage_canuse'] == 0)
+	verify_post_check($mybb->get_input('my_post_key'));
+
+	if(empty($mybb->input['ougc_signatureimage_remove']) && empty($mybb->input['ougc_signatureimage_submit']))
+	{
+		return;
+	}
+
+	if(!$mybb->usergroup['ougc_signatureimage_canuse'])
+	{
+		error_no_permission();
+	}
+
+	$ougc_signatureimage_error = "";
+
+	if(!empty($mybb->input['ougc_signatureimage_remove'])) // remove signature image
+	{
+		$ougc_signatureimage_updated = array(
+			"ougc_signatureimage" => "",
+			"ougc_signatureimage_dimensions" => "",
+			"ougc_signatureimage_type" => ""
+		);
+
+		$db->update_query("users", $ougc_signatureimage_updated, "uid='{$mybb->user['uid']}'");
+
+		ougc_signatureimage_remove($mybb->user['uid']);
+	}
+	elseif($_FILES['ougc_signatureimage_upload']['name']) // upload signature image
+	{
+		if(!$mybb->usergroup['ougc_signatureimage_canupload'])
 		{
 			error_no_permission();
 		}
 
-		$ougc_signatureimage_error = "";
+		$ougc_signatureimage = ougc_signatureimage_upload();
 
-		if(!empty($mybb->input['remove'])) // remove signature image
+		if($ougc_signatureimage['error'])
 		{
-			$updated_ougc_signatureimage = array(
-				"ougc_signatureimage" => "",
-				"ougc_signatureimage_dimensions" => "",
-				"ougc_signatureimage_type" => ""
-			);
-			$db->update_query("users", $updated_ougc_signatureimage, "uid='{$mybb->user['uid']}'");
-			remove_ougc_signatureimage($mybb->user['uid']);
-		}
-		elseif($_FILES['ougc_signatureimageupload']['name']) // upload signature image
-		{
-			if($mybb->usergroup['ougc_signatureimage_canupload'] == 0)
-			{
-				error_no_permission();
-			}
-
-			$ougc_signatureimage = upload_ougc_signatureimage();
-			if($ougc_signatureimage['error'])
-			{
-				$ougc_signatureimage_error = $ougc_signatureimage['error'];
-			}
-			else
-			{
-				if($ougc_signatureimage['width'] > 0 && $ougc_signatureimage['height'] > 0)
-				{
-					$ougc_signatureimage_dimensions = $ougc_signatureimage['width']."|".$ougc_signatureimage['height'];
-				}
-				$updated_ougc_signatureimage = array(
-					"ougc_signatureimage" => $ougc_signatureimage['ougc_signatureimage'].'?dateline='.TIME_NOW,
-					"ougc_signatureimage_dimensions" => $ougc_signatureimage_dimensions,
-					"ougc_signatureimage_type" => "upload"
-				);
-				$db->update_query("users", $updated_ougc_signatureimage, "uid='{$mybb->user['uid']}'");
-			}
-		}
-		elseif($mybb->input['ougc_signatureimageurl'] && $mybb->settings['ougc_signatureimage_allowremote']) // remote signature image
-		{
-			$mybb->input['ougc_signatureimageurl'] = trim($mybb->get_input('ougc_signatureimageurl'));
-			if(validate_email_format($mybb->input['ougc_signatureimageurl']) != false)
-			{
-				// Gravatar
-				$mybb->input['ougc_signatureimageurl'] = my_strtolower($mybb->input['ougc_signatureimageurl']);
-
-				// If user image does not exist, or is a higher rating, use the mystery man
-				$email = md5($mybb->input['ougc_signatureimageurl']);
-
-				$s = '';
-				if(!$mybb->usergroup['ougc_signatureimage_maxdimensions'])
-				{
-					$mybb->usergroup['ougc_signatureimage_maxdimensions'] = '200x200'; // Hard limit of 200 if there are no limits
-				}
-
-				// Because Gravatars are square, hijack the width
-				list($maxwidth, $maxheight) = explode("x", my_strtolower($mybb->usergroup['ougc_signatureimage_maxdimensions']));
-				$maxheight = (int)$maxwidth;
-
-				// Rating?
-				$types = array('g', 'pg', 'r', 'x');
-				$rating = $mybb->settings['ougc_signatureimage_rating'];
-
-				if(!in_array($rating, $types))
-				{
-					$rating = 'g';
-				}
-
-				$s = "?s={$maxheight}&r={$rating}&d=mm";
-
-				$updated_avatar = array(
-					"ougc_signatureimage" => "https://www.gravatar.com/avatar/{$email}{$s}",
-					"ougc_signatureimage_dimensions" => "{$maxheight}|{$maxheight}",
-					"ougc_signatureimage_type" => "gravatar"
-				);
-
-				$db->update_query("users", $updated_avatar, "uid = '{$mybb->user['uid']}'");
-			}
-			else
-			{
-				$mybb->input['ougc_signatureimageurl'] = preg_replace("#script:#i", "", $mybb->input['ougc_signatureimageurl']);
-				$ext = get_extension($mybb->input['ougc_signatureimageurl']);
-
-				// Copy the signature image to the local server (work around remote URL access disabled for getimagesize)
-				$file = fetch_remote_file($mybb->input['ougc_signatureimageurl']);
-				if(!$file)
-				{
-					$ougc_signatureimage_error = $lang->error_invalidougc_signatureimageurl;
-				}
-				else
-				{
-					$tmp_name = $mybb->settings['ougc_signatureimage_uploadpath']."/remote_".md5(random_str());
-					$fp = @fopen($tmp_name, "wb");
-					if(!$fp)
-					{
-						$ougc_signatureimage_error = $lang->error_invalidougc_signatureimageurl;
-					}
-					else
-					{
-						fwrite($fp, $file);
-						fclose($fp);
-						list($width, $height, $type) = @getimagesize($tmp_name);
-						@unlink($tmp_name);
-						if(!$type)
-						{
-							$ougc_signatureimage_error = $lang->error_invalidougc_signatureimageurl;
-						}
-					}
-				}
-
-				if(empty($ougc_signatureimage_error))
-				{
-					if($width && $height && $mybb->usergroup['ougc_signatureimage_maxdimensions'] != "")
-					{
-						list($maxwidth, $maxheight) = explode("x", my_strtolower($mybb->usergroup['ougc_signatureimage_maxdimensions']));
-						if(($maxwidth && $width > $maxwidth) || ($maxheight && $height > $maxheight))
-						{
-							$lang->error_ougc_signatureimagetoobig = $lang->sprintf($lang->error_ougc_signatureimagetoobig, $maxwidth, $maxheight);
-							$ougc_signatureimage_error = $lang->error_ougc_signatureimagetoobig;
-						}
-					}
-				}
-
-				if(empty($ougc_signatureimage_error))
-				{
-					if($width > 0 && $height > 0)
-					{
-						$ougc_signatureimage_dimensions = (int)$width."|".(int)$height;
-					}
-					$updated_ougc_signatureimage = array(
-						"ougc_signatureimage" => $db->escape_string($mybb->input['ougc_signatureimageurl'].'?dateline='.TIME_NOW),
-						"ougc_signatureimage_dimensions" => $ougc_signatureimage_dimensions,
-						"ougc_signatureimage_type" => "remote"
-					);
-					$db->update_query("users", $updated_ougc_signatureimage, "uid='{$mybb->user['uid']}'");
-					remove_ougc_signatureimage($mybb->user['uid']);
-				}
-			}
+			$ougc_signatureimage_error = $ougc_signatureimage['error'];
 		}
 		else
 		{
-			$ougc_signatureimage_error = $lang->ougc_signatureimage_error_remote_not_allowed;
+			if($ougc_signatureimage['width'] > 0 && $ougc_signatureimage['height'] > 0)
+			{
+				$ougc_signatureimage_dimensions = $ougc_signatureimage['width']."|".$ougc_signatureimage['height'];
+			}
+			$ougc_signatureimage_updated = array(
+				"ougc_signatureimage" => $ougc_signatureimage['ougc_signatureimage'].'?dateline='.TIME_NOW,
+				"ougc_signatureimage_dimensions" => $ougc_signatureimage_dimensions,
+				"ougc_signatureimage_type" => "upload"
+			);
+			$db->update_query("users", $ougc_signatureimage_updated, "uid='{$mybb->user['uid']}'");
+		}
+	}
+	elseif($mybb->input['ougc_signatureimage_url'] && $mybb->settings['ougc_signatureimage_allowremote']) // remote signature image
+	{
+		$mybb->input['ougc_signatureimage_url'] = trim($mybb->get_input('ougc_signatureimage_url'));
+
+		$mybb->input['ougc_signatureimage_url'] = preg_replace("#script:#i", "", $mybb->input['ougc_signatureimage_url']);
+
+		$ext = get_extension($mybb->input['ougc_signatureimage_url']);
+
+		// Copy the signature image to the local server (work around remote URL access disabled for getimagesize)
+		$file = fetch_remote_file($mybb->input['ougc_signatureimage_url']);
+		if(!$file)
+		{
+			$ougc_signatureimage_error = $lang->ougc_signatureimage_error_invalid_url;
+		}
+		else
+		{
+			$tmp_name = $mybb->settings['ougc_signatureimage_uploadpath']."/remote_".md5(random_str());
+			$fp = @fopen($tmp_name, "wb");
+			if(!$fp)
+			{
+				$ougc_signatureimage_error = $lang->ougc_signatureimage_error_invalid_url;
+			}
+			else
+			{
+				fwrite($fp, $file);
+				fclose($fp);
+				list($width, $height, $type) = @getimagesize($tmp_name);
+				@unlink($tmp_name);
+				if(!$type)
+				{
+					$ougc_signatureimage_error = $lang->ougc_signatureimage_error_invalid_url;
+				}
+			}
 		}
 
 		if(empty($ougc_signatureimage_error))
 		{
-			redirect("usercp.php?action=ougc_signatureimage", $lang->redirect_ougc_signatureimageupdated);
+			if($width && $height && $mybb->usergroup['ougc_signatureimage_maxdimensions'] != "")
+			{
+				list($maxwidth, $maxheight) = explode("x", my_strtolower($mybb->usergroup['ougc_signatureimage_maxdimensions']));
+				if(($maxwidth && $width > $maxwidth) || ($maxheight && $height > $maxheight))
+				{
+					$lang->error_ougc_signatureimagetoobig = $lang->sprintf($lang->error_ougc_signatureimagetoobig, $maxwidth, $maxheight);
+					$ougc_signatureimage_error = $lang->error_ougc_signatureimagetoobig;
+				}
+			}
 		}
-		else
+
+		if(empty($ougc_signatureimage_error))
 		{
-			$mybb->input['action'] = "ougc_signatureimage";
-			$ougc_signatureimage_error = inline_error($ougc_signatureimage_error);
+			if($width > 0 && $height > 0)
+			{
+				$ougc_signatureimage_dimensions = (int)$width."|".(int)$height;
+			}
+			$ougc_signatureimage_updated = array(
+				"ougc_signatureimage" => $db->escape_string($mybb->input['ougc_signatureimage_url'].'?dateline='.TIME_NOW),
+				"ougc_signatureimage_dimensions" => $ougc_signatureimage_dimensions,
+				"ougc_signatureimage_type" => "remote"
+			);
+			$db->update_query("users", $ougc_signatureimage_updated, "uid='{$mybb->user['uid']}'");
+			ougc_signatureimage_remove($mybb->user['uid']);
 		}
 	}
-
-	if($mybb->input['action'] == "ougc_signatureimage")
+	else
 	{
-		add_breadcrumb($lang->nav_usercp, "usercp.php");
-		add_breadcrumb($lang->change_ougc_signatureimage, "usercp.php?action=ougc_signatureimage");
+		$ougc_signatureimage_error = $lang->ougc_signatureimage_error_remote_not_allowed;
+	}
 
-		// Show main signature image page
-		if($mybb->usergroup['ougc_signatureimage_canuse'] == 0)
-		{
-			error_no_permission();
-		}
-
-		$ougc_signatureimagemsg = $ougc_signatureimageurl = '';
-
-		if($mybb->user['ougc_signatureimage_type'] == "upload" || stristr($mybb->user['ougc_signatureimage'], $mybb->settings['ougc_signatureimage_uploadpath']))
-		{
-			$ougc_signatureimagemsg = "<br /><strong>".$lang->already_uploaded_ougc_signatureimage."</strong>";
-		}
-		elseif($mybb->user['ougc_signatureimage_type'] == "remote" || my_validate_url($mybb->user['ougc_signatureimage']))
-		{
-			$ougc_signatureimagemsg = "<br /><strong>".$lang->using_remote_ougc_signatureimage."</strong>";
-			$ougc_signatureimageurl = htmlspecialchars_uni($mybb->user['ougc_signatureimage']);
-		}
-
-		if(!empty($mybb->user['ougc_signatureimage']) && ((($mybb->user['ougc_signatureimage_type'] == 'remote' || $mybb->user['ougc_signatureimage_type'] == 'gravatar') && $mybb->settings['ougc_signatureimage_allowremote'] == 1) || $mybb->user['ougc_signatureimage_type'] == "upload"))
-		{
-			$userougc_signatureimage = format_signature_image(htmlspecialchars_uni($mybb->user['ougc_signatureimage']), $mybb->user['ougc_signatureimage_dimensions'], '200x200');
-			eval("\$currentougc_signatureimage = \"".$templates->get("ougcsignatureimage_usercp_current")."\";");
-		}
-
-		if($mybb->usergroup['ougc_signatureimage_maxdimensions'] != "")
-		{
-			list($maxwidth, $maxheight) = explode("x", my_strtolower($mybb->usergroup['ougc_signatureimage_maxdimensions']));
-			$lang->ougc_signatureimage_note .= "<br />".$lang->sprintf($lang->ougc_signatureimage_note_dimensions, $maxwidth, $maxheight);
-		}
-		if($mybb->usergroup['ougc_signatureimage_maxsize'])
-		{
-			$maxsize = get_friendly_size($mybb->usergroup['ougc_signatureimage_maxsize']*1024);
-			$lang->ougc_signatureimage_note .= "<br />".$lang->sprintf($lang->ougc_signatureimage_note_size, $maxsize);
-		}
-
-		$auto_resize = '';
-		if($mybb->settings['ougc_signatureimage_resizing'] == "auto")
-		{
-			eval("\$auto_resize = \"".$templates->get("ougcsignatureimage_usercp_auto_resize_auto")."\";");
-		}
-		else if($mybb->settings['ougc_signatureimage_resizing'] == "user")
-		{
-			eval("\$auto_resize = \"".$templates->get("ougcsignatureimage_usercp_auto_resize_user")."\";");
-		}
-
-		$ougc_signatureimageupload = '';
-		if($mybb->usergroup['ougc_signatureimage_canupload'] == 1)
-		{
-			eval("\$ougc_signatureimageupload = \"".$templates->get("ougcsignatureimage_usercp_upload")."\";");
-		}
-
-		$ougc_signatureimage_remote = '';
-		if($mybb->settings['ougc_signatureimage_allowremote'] == 1)
-		{
-			eval("\$ougc_signatureimage_remote = \"".$templates->get("ougcsignatureimage_usercp_remote")."\";");
-		}
-
-		$removeougc_signatureimage = '';
-		if(!empty($mybb->user['ougc_signatureimage']))
-		{
-			eval("\$removeougc_signatureimage = \"".$templates->get("ougcsignatureimage_usercp_remove")."\";");
-		}
-
-		if(!isset($ougc_signatureimage_error))
-		{
-			$ougc_signatureimage_error = '';
-		}
-
-		eval("\$ougc_signatureimage = \"".$templates->get("ougcsignatureimage_usercp")."\";");
-		output_page($ougc_signatureimage);
+	if(empty($ougc_signatureimage_error))
+	{
+		redirect("usercp.php?action=editsig", $lang->redirect_ougc_signatureimage_updated);
+	}
+	else
+	{
+		$mybb->input['action'] = "editsig";
+		$error = inline_error($ougc_signatureimage_error);
 	}
 }
 
@@ -661,24 +514,102 @@ function ougc_signatureimage_postbit(&$post)
 // Parse signature in UCP edit page
 function ougc_signatureimage_editsig()
 {
-	global $signature, $mybb;
+	global $signature, $mybb, $ougc_signatureimage, $lang, $templates, $theme;
 
 	ougc_signatureimage_profile_parse($signature, $mybb->user);
+
+	$ougc_signatureimage = '';
+
+	// Show main signature image page
+	if(!$mybb->usergroup['ougc_signatureimage_canuse'])
+	{
+		return;
+	}
+
+	$ougc_signatureimage_msg = $ougc_signatureimage_url = '';
+
+	if($mybb->user['ougc_signatureimage_type'] == "upload" || stristr($mybb->user['ougc_signatureimage'], $mybb->settings['ougc_signatureimage_uploadpath']))
+	{
+		$ougc_signatureimage_msg = "<br /><strong>".$lang->already_uploaded_ougc_signatureimage."</strong>";
+	}
+	elseif($mybb->user['ougc_signatureimage_type'] == "remote" || my_validate_url($mybb->user['ougc_signatureimage']))
+	{
+		$ougc_signatureimage_msg = "<br /><strong>".$lang->using_remote_ougc_signatureimage."</strong>";
+		$ougc_signatureimage_url = htmlspecialchars_uni($mybb->user['ougc_signatureimage']);
+	}
+
+	if(!empty($mybb->user['ougc_signatureimage']) && ((($mybb->user['ougc_signatureimage_type'] == 'remote' || $mybb->user['ougc_signatureimage_type'] == 'gravatar') && $mybb->settings['ougc_signatureimage_allowremote'] == 1) || $mybb->user['ougc_signatureimage_type'] == "upload"))
+	{
+		$ougc_signatureimage_user = format_signature_image(htmlspecialchars_uni($mybb->user['ougc_signatureimage']), $mybb->user['ougc_signatureimage_dimensions'], '200x200');
+		eval("\$ougc_signatureimage_current = \"".$templates->get("ougcsignatureimage_usercp_current")."\";");
+	}
+
+	if($mybb->usergroup['ougc_signatureimage_maxdimensions'] != "")
+	{
+		list($maxwidth, $maxheight) = explode("x", my_strtolower($mybb->usergroup['ougc_signatureimage_maxdimensions']));
+		$lang->ougc_signatureimage_note .= "<br />".$lang->sprintf($lang->ougc_signatureimage_note_dimensions, $maxwidth, $maxheight);
+	}
+	if($mybb->usergroup['ougc_signatureimage_maxsize'])
+	{
+		$maxsize = get_friendly_size($mybb->usergroup['ougc_signatureimage_maxsize']*1024);
+		$lang->ougc_signatureimage_note .= "<br />".$lang->sprintf($lang->ougc_signatureimage_note_size, $maxsize);
+	}
+
+	$replacement_string = "{{$mybb->settings['ougc_signatureimage_replacement']}}";
+
+	$lang->ougc_signatureimage_note .= $lang->sprintf($lang->ougc_signatureimage_note_replacement, $replacement_string);
+
+	$auto_resize = '';
+	if($mybb->settings['ougc_signatureimage_resizing'] == "auto")
+	{
+		eval("\$auto_resize = \"".$templates->get("ougcsignatureimage_usercp_auto_resize_auto")."\";");
+	}
+	else if($mybb->settings['ougc_signatureimage_resizing'] == "user")
+	{
+		eval("\$auto_resize = \"".$templates->get("ougcsignatureimage_usercp_auto_resize_user")."\";");
+	}
+
+	$ougc_signatureimage_upload = '';
+	if($mybb->usergroup['ougc_signatureimage_canupload'] == 1)
+	{
+		eval("\$ougc_signatureimage_upload = \"".$templates->get("ougcsignatureimage_usercp_upload")."\";");
+	}
+
+	$ougc_signatureimage_remote = '';
+	if($mybb->settings['ougc_signatureimage_allowremote'] == 1)
+	{
+		eval("\$ougc_signatureimage_remote = \"".$templates->get("ougcsignatureimage_usercp_remote")."\";");
+	}
+
+	$ougc_signatureimage_remove = '';
+	if(!empty($mybb->user['ougc_signatureimage']))
+	{
+		eval("\$ougc_signatureimage_remove = \"".$templates->get("ougcsignatureimage_usercp_remove")."\";");
+	}
+
+	if(!isset($ougc_signatureimage_error))
+	{
+		$ougc_signatureimage_error = '';
+	}
+
+	eval("\$ougc_signatureimage = \"".$templates->get("ougcsignatureimage_usercp")."\";");
 }
 
 // Parse the signature
 function ougc_signatureimage_profile_parse(&$signature, &$user)
 {
-	global $templates, $settings, $lang;
+	global $templates, $mybb, $lang;
 
-	if(strpos($signature, '{SIGNATURE_IMAGE}') == false)
+	$replacement_string = "{{$mybb->settings['ougc_signatureimage_replacement']}}";
+
+	if(strpos($signature, $replacement_string) == false)
 	{
 		return;
 	}
 
 	if(!$user['ougc_signatureimage'])
 	{
-		$signature = str_replace('{SIGNATURE_IMAGE}', '', $signature);
+		$signature = str_replace($replacement_string, '', $signature);
 		return;
 	}
 
@@ -693,7 +624,7 @@ function ougc_signatureimage_profile_parse(&$signature, &$user)
 
 	eval('$image = "'.$templates->get('ougcsignatureimage', 1, 0).'";');
 
-	$signature = str_replace('{SIGNATURE_IMAGE}', $image, $signature);
+	$signature = str_replace($replacement_string, $image, $signature);
 }
 
 // Online location support
@@ -727,16 +658,16 @@ function ougc_signatureimage_removal()
 	global $mybb, $db, $user;
 	require_once MYBB_ROOT."inc/functions_ougc_signatureimage.php";
 
-	if(!empty($mybb->input['remove_ougc_signatureimage']))
+	if(!empty($mybb->input['ougc_signatureimage_remove']))
 	{
-		$updated_ougc_signatureimage = array(
+		$ougc_signatureimage_updated = array(
 			"ougc_signatureimage" => "",
 			"ougc_signatureimage_dimensions" => "",
 			"ougc_signatureimage_type" => ""
 		);
-		remove_ougc_signatureimage($user['uid']);
+		ougc_signatureimage_remove($user['uid']);
 
-		$db->update_query("users", $updated_ougc_signatureimage, "uid='{$user['uid']}'");
+		$db->update_query("users", $ougc_signatureimage_updated, "uid='{$user['uid']}'");
 	}
 }
 
@@ -751,7 +682,7 @@ function ougc_signatureimage_removal_lang()
 }
 
 // Delete signature image if user is deleted
-function ougc_signatureimage_user_delete($delete)
+function ougc_signatureimage_user_delete(&$delete)
 {
 	global $db;
 
@@ -762,70 +693,55 @@ function ougc_signatureimage_user_delete($delete)
 		$ougc_signatureimage = substr($ougc_signatureimage, 2, -20);
 		@unlink(MYBB_ROOT.$ougc_signatureimage);
 	}
-
-	return $delete;
 }
 
-// Edit user options in Admin CP
-function ougc_signatureimage_user_options(&$tabs)
-{
-	global $lang;
-
-	$lang->load("ougc_signatureimage", true);
-
-	$tabs['ougc_signatureimage'] = $lang->signature_image;
-}
-
-function ougc_signatureimage_user_graph()
+function ougc_signatureimage_admin_user_users_edit_signatur()
 {
 	global $lang, $form, $mybb, $user;
 	$lang->load("ougc_signatureimage", true);
 
-	$ougc_signatureimage_dimensions = explode("|", $user['ougc_signatureimagedimensions']);
-	if($user['ougc_signatureimage'] && (my_strpos($user['ougc_signatureimage'], '://') === false || $mybb->settings['ougc_signature_allowremote']))
+	$ougc_signatureimage_dimensions = explode("|", $user['ougc_signatureimage_dimensions']);
+
+	if($user['ougc_signatureimage'] && (my_strpos($user['ougc_signatureimage'], '://') === false || $mybb->settings['ougc_signatureimage_allowremote']))
 	{
-		if($user['ougc_signatureimagedimensions'])
+		if($user['ougc_signatureimage_dimensions'])
 		{
 			require_once MYBB_ROOT."inc/functions_image.php";
-			list($width, $height) = explode("|", $user['ougc_signatureimagedimensions']);
-			$scaled_dimensions = scale_image($width, $height, 200, 200);
+			list($width, $height) = explode("|", $user['ougc_signatureimage_dimensions']);
+			$scaled_dimensions = scale_image($width, $height, 500, 500);
 		}
 		else
 		{
 			$scaled_dimensions = array(
-				"width" => 200,
-				"height" => 200
+				"width" => '',
+				"height" => ''
 			);
 		}
+
 		if(!my_validate_url($user['ougc_signatureimage']))
 		{
 			$user['ougc_signatureimage'] = "../{$user['ougc_signatureimage']}\n";
 		}
 	}
-	else
-	{
-		$user['ougc_signatureimage'] = "../".$mybb->settings['useravatar'];
-		$scaled_dimensions = array(
-			"width" => 200,
-			"height" => 200
-		);
-	}
-	$ougc_signatureimage_top = ceil((206-$scaled_dimensions['height'])/2);
 
 	echo "<div id=\"tab_ougc_signatureimage\">\n";
 	$table = new Table;
-	$table->construct_header($lang->current_ougc_signatureimage, array('colspan' => 2));
+	$table->construct_header($lang->ougc_signatureimage_desc, array('colspan' => 2));
 
-	$table->construct_cell("<div style=\"width: 206px; height: 206px;\" class=\"user_avatar\"><img src=\"".htmlspecialchars_uni($user['ougc_signatureimage'])."\" width=\"{$scaled_dimensions['width']}\" style=\"margin-top: {$ougc_signatureimage_top}px\" height=\"{$scaled_dimensions['height']}\" alt=\"\" /></div>", array('width' => 1));
+	if(!empty($scaled_dimensions) || 1)
+	{
+		$table->construct_cell("<img src=\"".htmlspecialchars_uni($user['ougc_signatureimage'])."\" width=\"{$scaled_dimensions['width']}\" height=\"{$scaled_dimensions['height']}\" alt=\"\" />", array('width' => 1));
+		$table->construct_row();
+	}
 
 	$ougc_signatureimage_url = '';
-	if($user['ougc_signatureimagetype'] == "upload" || stristr($user['ougc_signatureimage'], $mybb->settings['ougc_signatureimageuploadpath']))
+	if($user['ougc_signatureimage_type'] == "upload" || stristr($user['ougc_signatureimage'], $mybb->settings['ougc_signatureimage_uploadpath']))
 	{
-		$current_ougc_signatureimage_msg = "<br /><strong>{$lang->user_current_using_uploaded_ougc_signatureimage}</strong>";
+		$current_ougc_signatureimage_msg = "<br /><strong>{$lang->ougc_signatureimage_user_current_using_uploaded}</strong>";
 	}
-	elseif($user['ougc_signatureimagetype'] == "remote" || my_validate_url($user['ougc_signatureimage']))
+	elseif($user['ougc_signatureimage_type'] == "remote" || my_validate_url($user['ougc_signatureimage']))
 	{
-		$current_ougc_signatureimage_msg = "<br /><strong>{$lang->user_current_using_remote_ougc_signatureimage}</strong>";
+		$current_ougc_signatureimage_msg = "<br /><strong>{$lang->ougc_signatureimage_user_current_using_remote}</strong>";
 		$ougc_signatureimage_url = $user['ougc_signatureimage'];
 	}
 
@@ -850,13 +766,17 @@ function ougc_signatureimage_user_graph()
 
 	if($user['ougc_signatureimage'])
 	{
-		$remove_ougc_signatureimage = "<br /><br />".$form->generate_check_box("remove_ougc_signatureimage", 1, "<strong>{$lang->remove_ougc_signatureimage_admin}</strong>");
+		$table->construct_cell($form->generate_check_box("ougc_signatureimage_remove", 1, "<strong>{$lang->ougc_signatureimage_remove_admin}</strong>")."<br /><small>{$max_size}</small>");
+		$table->construct_row();
 	}
 
-	$table->construct_cell($lang->ougc_signatureimage_desc."{$remove_ougc_signatureimage}<br /><small>{$max_size}</small>");
-	$table->construct_row();
+	if(empty($scaled_dimensions) && !$user['ougc_signatureimage'])
+	{
+		$table->construct_cell($lang->ougc_signatureimage_admin_empty);
+		$table->construct_row();
+	}
 
-	$table->output($lang->ougc_signatureimage.": ".htmlspecialchars_uni($user['username']));
+	$table->output($lang->ougc_signatureimage_current);
 
 	// Custom signature image
 	if($mybb->settings['ougc_signatureimageresizing'] == "auto")
@@ -865,43 +785,43 @@ function ougc_signatureimage_user_graph()
 	}
 	else if($mybb->settings['ougc_signatureimageresizing'] == "user")
 	{
-		$auto_resize = "<input type=\"checkbox\" name=\"auto_resize\" value=\"1\" checked=\"checked\" id=\"auto_resize\" /> <label for=\"auto_resize\">{$lang->attempt_to_auto_resize_ougc_signatureimage}</label></span>";
+		$auto_resize = "<input type=\"checkbox\" name=\"auto_resize\" value=\"1\" checked=\"checked\" id=\"auto_resize\" /> <label for=\"auto_resize\">{$lang->ougc_signatureimage_attempt_to_auto_resize}</label></span>";
 	}
-	$form_container = new FormContainer($lang->specify_custom_ougc_signatureimage);
-	$form_container->output_row($lang->upload_ougc_signatureimage, $auto_resize, $form->generate_file_upload_box('ougc_signatureimage_upload', array('id' => 'ougc_signatureimage_upload')), 'ougc_signatureimage_upload');
+	$form_container = new FormContainer($lang->ougc_signatureimage_specify_custom);
+	$form_container->output_row($lang->ougc_signatureimage_upload, $auto_resize, $form->generate_file_upload_box('ougc_signatureimage_upload', array('id' => 'ougc_signatureimage_upload')), 'ougc_signatureimage_upload');
 	if($mybb->settings['ougc_signatureimage_allowremote'])
 	{
-		$form_container->output_row($lang->or_specify_ougc_signatureimage_url, "", $form->generate_text_box('ougc_signatureimage_url', $ougc_signatureimage_url, array('id' => 'ougc_signatureimage_url')), 'ougc_signatureimage_url');
+		$form_container->output_row($lang->ougc_signatureimage_or_specify_url, "", $form->generate_text_box('ougc_signatureimage_url', $ougc_signatureimage_url, array('id' => 'ougc_signatureimage_url')), 'ougc_signatureimage_url');
 	}
 	$form_container->end();
 	echo "</div>\n";
 }
 
-function ougc_signatureimage_user_commit()
+function ougc_signatureimage_admin_user_users_edit_start()
 {
-	global $db, $extra_user_updates, $mybb, $errors, $user;
+	global $db, $extra_user_updates, $mybb, $ougc_signatureimage_errors, $user;
 
 	require_once MYBB_ROOT."inc/functions_ougc_signatureimage.php";
 	$user_permissions = user_permissions($user['uid']);
 
 	// Are we removing a signature image from this user?
-	if($mybb->input['remove_ougc_signatureimage'])
+	if($mybb->input['ougc_signatureimage_remove'])
 	{
 		$extra_user_updates = array(
 			"ougc_signatureimage" => "",
-			"ougc_signatureimagedimensions" => "",
-			"ougc_signatureimagetype" => ""
+			"ougc_signatureimage_dimensions" => "",
+			"ougc_signatureimage_type" => ""
 		);
-		remove_ougc_signatureimage($user['uid']);
+		ougc_signatureimage_remove($user['uid']);
 	}
 
 	// Are we uploading a new signature image?
 	if($_FILES['ougc_signatureimage_upload']['name'])
 	{
-		$ougc_signatureimage = upload_ougc_signatureimage($_FILES['ougc_signatureimage_upload'], $user['uid']);
+		$ougc_signatureimage = ougc_signatureimage_upload($_FILES['ougc_signatureimage_upload'], $user['uid']);
 		if($ougc_signatureimage['error'])
 		{
-			$errors = array($ougc_signatureimage['error']);
+			$ougc_signatureimage_errors = array($ougc_signatureimage['error']);
 		}
 		else
 		{
@@ -911,8 +831,8 @@ function ougc_signatureimage_user_commit()
 			}
 			$extra_user_updates = array(
 				"ougc_signatureimage" => $ougc_signatureimage['ougc_signatureimage'].'?dateline='.TIME_NOW,
-				"ougc_signatureimagedimensions" => $ougc_signatureimage_dimensions,
-				"ougc_signatureimagetype" => "upload"
+				"ougc_signatureimage_dimensions" => $ougc_signatureimage_dimensions,
+				"ougc_signatureimage_type" => "upload"
 			);
 		}
 	}
@@ -921,7 +841,7 @@ function ougc_signatureimage_user_commit()
 	{
 		if(!$mybb->settings['ougc_signatureimage_allowremote'])
 		{
-			$errors = array($lang->error_remote_ougc_signatureimage_not_allowed);
+			$ougc_signatureimage_errors = array($lang->error_remote_ougc_signatureimage_not_allowed);
 		}
 		else
 		{
@@ -1009,10 +929,31 @@ function ougc_signatureimage_user_commit()
 				}
 				else
 				{
-					$errors = array($ougc_signatureimage_error);
+					$ougc_signatureimage_errors = array($ougc_signatureimage_error);
 				}
 			}
 		}
+	}
+
+	if(!$ougc_signatureimage_errors)
+	{
+		return;
+	}
+
+	global $plugins;
+
+	$plugins->add_hook("datahandler_user_validate", "ougc_signatureimage_datahandler_user_validate");
+}
+
+function ougc_signatureimage_datahandler_user_validate()
+{
+	global $ougc_signatureimage_errors, $errors;
+
+	$errors = isset($ougc_signatureimage_errors) ? $ougc_signatureimage_errors : $errors;
+
+	if($errors)
+	{
+		return;
 	}
 }
 
@@ -1025,8 +966,8 @@ function ougc_signatureimage_usergroup_permission()
 	if($run_module == 'user' && !empty($form_container->_title) & !empty($lang->misc) & $form_container->_title == $lang->misc)
 	{
 		$ougc_signatureimage_options = array(
-	 		$form->generate_check_box('ougc_signatureimage_canuse', 1, $lang->can_use_ougc_signatureimage, array("checked" => $mybb->input['ougc_signatureimage_canuse'])),
-			$form->generate_check_box('ougc_signatureimage_canupload', 1, $lang->can_upload_ougc_signatureimage, array("checked" => $mybb->input['ougc_signatureimage_canupload'])),
+	 		$form->generate_check_box('ougc_signatureimage_canuse', 1, $lang->ougc_signatureimage_can_use, array("checked" => $mybb->input['ougc_signatureimage_canuse'])),
+			$form->generate_check_box('ougc_signatureimage_canupload', 1, $lang->ougc_signatureimage_can_upload, array("checked" => $mybb->input['ougc_signatureimage_canupload'])),
 			"{$lang->ougc_signatureimage_size}<br /><small>{$lang->ougc_signatureimage_size_desc}</small><br />".$form->generate_numeric_field('ougc_signatureimage_maxsize', $mybb->input['ougc_signatureimage_maxsize'], array('id' => 'ougc_signatureimage_maxsize', 'class' => 'field50', 'min' => 0)). "KB",
 			"{$lang->ougc_signatureimage_dims}<br /><small>{$lang->ougc_signatureimage_dims_desc}</small><br />".$form->generate_text_box('ougc_signatureimage_maxdimensions', $mybb->input['ougc_signatureimage_maxdimensions'], array('id' => 'ougc_signatureimage_maxdimensions', 'class' => 'field'))
 		);
@@ -1042,7 +983,14 @@ function ougc_signatureimage_usergroup_permission_commit()
 
 	foreach($_db_columns['usergroups'] as $name => $definition)
 	{
-		$updated_group[$name] = $db->escape_string($mybb->get_input($name));
+		if($name == 'ougc_signatureimage_maxdimensions')
+		{
+			$updated_group[$name] = $db->escape_string($mybb->get_input($name));
+		}
+		else
+		{
+			$updated_group[$name] = $mybb->get_input($name, MyBB::INPUT_INT);
+		}
 	}
 }
 
