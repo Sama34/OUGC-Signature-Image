@@ -104,7 +104,7 @@ function ougc_signatureimage_info()
 
 	return array(
 		"name"			=> 'OUGC Signature Image',
-		"description"	=> $lang->setting_group_ougc_signatureimage_desc,
+		"description"	=> $lang->setting_group_ougc_signatureimage_desc.$lang->setting_group_ougc_signatureimage_more,
 		'website'		=> 'https://ougc.network',
 		'author'		=> 'Omar G.',
 		'authorsite'	=> 'https://ougc.network',
@@ -308,7 +308,7 @@ disabled={$lang->setting_ougc_signatureimage_resizing_disabled}",
 
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
 	find_replace_templatesets("header", "#".preg_quote('{$bannedwarning}')."#i", '{$ougc_signatureimage_remote_notice}{$bannedwarning}');
-	find_replace_templatesets("usercp_editsig", "#".preg_quote('</div>')."#i", '</div>{$ougc_signatureimage}');
+	find_replace_templatesets("usercp_editsig", "#".preg_quote('value="{$lang->preview}" />').'\s*'.preg_quote('</div>')."#i", 'value="{$lang->preview}" /></div>{$ougc_signatureimage}');
 	find_replace_templatesets("usercp_editsig", "#".preg_quote('action="usercp.php"')."#i", 'enctype="multipart/form-data" action="usercp.php"');
 	find_replace_templatesets("modcp_editprofile", "#".preg_quote('{$lang->remove_avatar}</label></span></td>
 										</tr>')."#i", '{$lang->remove_avatar}</label></span></td>

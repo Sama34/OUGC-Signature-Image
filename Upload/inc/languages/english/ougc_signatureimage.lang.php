@@ -32,7 +32,7 @@
 
 $l['setting_group_ougc_signatureimage'] = "OUGC Signature Image";
 $l['setting_group_ougc_signatureimage_desc'] = "Allows your users to upload an image to display in their signature.";
-$l['setting_group_ougc_signatureimage_desc'] .= "<br />Based on <a href=\"http://galaxiesrealm.com/index.php\">Starpaul20</a>'s <a href=\"https://github.com/PaulBender/Profile-Pictures/\">Profile Picture</a> plugin.";
+$l['setting_group_ougc_signatureimage_more'] = "<br />Based on <a href=\"http://galaxiesrealm.com/index.php\">Starpaul20</a>'s <a href=\"https://github.com/PaulBender/Profile-Pictures/\">Profile Picture</a> plugin.";
 
 // Settings
 $l['setting_ougc_signatureimage_uploadpath'] = 'Signature Images Upload Path';
