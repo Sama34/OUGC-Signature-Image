@@ -502,13 +502,13 @@ function ougc_signatureimage_profile()
 {
 	global $signature, $memprofile;
 
-	ougc_signatureimage_profile_parse($signature, $memprofile);
+	ougc_signatureimage_parse($signature, $memprofile);
 }
 
 // Signature Image display in postbit
 function ougc_signatureimage_postbit(&$post)
 {
-	ougc_signatureimage_profile_parse($post['signature'], $post);
+	ougc_signatureimage_parse($post['signature'], $post);
 }
 
 // Parse signature in UCP edit page
@@ -516,7 +516,7 @@ function ougc_signatureimage_editsig()
 {
 	global $signature, $mybb, $ougc_signatureimage, $lang, $templates, $theme;
 
-	ougc_signatureimage_profile_parse($signature, $mybb->user);
+	ougc_signatureimage_parse($signature, $mybb->user);
 
 	$ougc_signatureimage = '';
 
@@ -596,7 +596,7 @@ function ougc_signatureimage_editsig()
 }
 
 // Parse the signature
-function ougc_signatureimage_profile_parse(&$signature, &$user)
+function ougc_signatureimage_parse(&$signature, &$user)
 {
 	global $templates, $mybb, $lang;
 
