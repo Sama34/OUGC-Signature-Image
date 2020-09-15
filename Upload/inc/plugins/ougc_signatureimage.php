@@ -150,7 +150,7 @@ function ougc_signatureimage_is_installed()
 // This function runs when the plugin is uninstalled.
 function ougc_signatureimage_uninstall()
 {
-	global $db, $cache, $ougc_signatureimage;
+	global $db, $cache, $ougc_signatureimage, $PL;
 	$PL or require_once PLUGINLIBRARY;
 
 	foreach($ougc_signatureimage->_db_columns() as $table => $columns)
