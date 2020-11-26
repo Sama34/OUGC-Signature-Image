@@ -79,19 +79,27 @@ else
 		$templatelist = '';
 	}
 
-	if(THIS_SCRIPT == 'usercp.php')
+	if(defined('THIS_SCRIPT'))
 	{
-		$templatelist .= 'ougcsignatureimage_usercp,ougcsignatureimage_usercp_auto_resize_auto,ougcsignatureimage_usercp_auto_resize_user,ougcsignatureimage_usercp_current,ougcsignatureimage_usercp_nav,ougcsignatureimage_usercp_remove,ougcsignatureimage_usercp_upload,ougcsignatureimage_usercp_remote, ougcsignatureimage';
-	}
+		if(THIS_SCRIPT == 'usercp.php')
+		{
+			$templatelist .= 'ougcsignatureimage_usercp,ougcsignatureimage_usercp_auto_resize_auto,ougcsignatureimage_usercp_auto_resize_user,ougcsignatureimage_usercp_current,ougcsignatureimage_usercp_nav,ougcsignatureimage_usercp_remove,ougcsignatureimage_usercp_upload,ougcsignatureimage_usercp_remote, ougcsignatureimage';
+		}
 
-	if(THIS_SCRIPT == 'member.php')
-	{
-		$templatelist .= 'ougcsignatureimage_profile';
-	}
+		if(THIS_SCRIPT == 'member.php')
+		{
+			$templatelist .= 'ougcsignatureimage_profile, ougcsignatureimage';
+		}
 
-	if(THIS_SCRIPT == 'modcp.php')
-	{
-		$templatelist .= 'ougcsignatureimage_modcp';
+		if(THIS_SCRIPT == 'modcp.php')
+		{
+			$templatelist .= 'ougcsignatureimage_modcp, ougcsignatureimage';
+		}
+
+		if(in_array(THIS_SCRIPT, ['showthread.php', 'editpost.php', 'newthread.php', 'newreply.php', 'private.php']))
+		{
+			$templatelist .= 'ougcsignatureimage';
+		}
 	}
 }
 
